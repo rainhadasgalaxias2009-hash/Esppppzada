@@ -1,0 +1,160 @@
+-- ============================================
+--  ESP RGB — Roblox Studio LocalScript
+--  Coloque em: StarterPlayerScripts
+-- ============================================
+
+local Players    = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- ── GUI ────────────────────────────────────────
+local gui = Instance.new("ScreenGui")
+gui.Name           = "ESP_RGB_GUI"
+gui.ResetOnSpawn   = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent         = LocalPlayer:WaitForChild("PlayerGui")
+
+local btn = Instance.new("TextButton")
+btn.Name            = "Toggle"
+btn.Size            = UDim2.new(0, 160, 0, 48)
+btn.Position        = UDim2.new(0, 16, 0, 16)
+btn.AnchorPoint     = Vector2.new(0, 0)
+btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+btn.TextColor3      = Color3.fromRGB(255, 255, 255)
+btn.Text            = "🔴  ESP: OFF"
+btn.Font            = Enum.Font.GothamBold
+btn.TextSize        = 16
+btn.AutoButtonColor = false
+btn.Parent          = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent       = btn
+
+local stroke = Instance.new("UIStroke")
+stroke.Color     = Color3.fromRGB(80, 80, 80)
+stroke.Thickness = 1.5
+stroke.Parent    = btn
+
+-- ── Estado ─────────────────────────────────────
+local espAtivo    = false
+local highlights  = {}   -- [character] = Highlight
+local hue         = 0    -- 0..1 para ciclo RGB
+
+-- ── Funções de Highlight ────────────────────────
+local function adicionarHighlight(character)
+	if not character or highlights[character] then return end
+
+	local hl = Instance.new("Highlight")
+	hl.FillTransparency    = 0.45
+	hl.OutlineTransparency = 1
+	hl.DepthMode           = Enum.HighlightDepthMode.AlwaysOnTop
+	hl.Parent              = character
+
+	highlights[character] = hl
+end
+
+local function removerHighlight(character)
+	if highlights[character] then
+		highlights[character]:Destroy()
+		highlights[character] = nil
+	end
+end
+
+-- ── Setup por player ───────────────────────────
+local function setupPlayer(player)
+	if player == LocalPlayer then return end
+
+	-- Personagem já existente
+	if player.Character then
+		if espAtivo then adicionarHighlight(player.Character) end
+	end
+
+	-- Novo personagem (respawn)
+	player.CharacterAdded:Connect(function(char)
+		if espAtivo then
+			-- Aguarda o modelo carregar antes de destacar
+			task.wait(0.1)
+			adicionarHighlight(char)
+		end
+	end)
+
+	-- Player saiu
+	player.AncestryChanged:Connect(function()
+		if not player.Parent and player.Character then
+			removerHighlight(player.Character)
+		end
+	end)
+end
+
+-- ── Ativar / Desativar todos ───────────────────
+local function ativarESP()
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character then
+			adicionarHighlight(p.Character)
+		end
+	end
+end
+
+local function desativarESP()
+	for char, hl in pairs(highlights) do
+		if hl and hl.Parent then hl:Destroy() end
+	end
+	highlights = {}
+end
+
+-- ── Botão toggle ───────────────────────────────
+btn.MouseButton1Click:Connect(function()
+	espAtivo = not espAtivo
+
+	if espAtivo then
+		btn.Text             = "🟢  ESP: ON"
+		btn.BackgroundColor3 = Color3.fromRGB(20, 90, 40)
+		stroke.Color         = Color3.fromRGB(0, 220, 80)
+		ativarESP()
+	else
+		btn.Text             = "🔴  ESP: OFF"
+		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+		stroke.Color         = Color3.fromRGB(80, 80, 80)
+		desativarESP()
+	end
+end)
+
+-- Efeito hover no botão
+btn.MouseEnter:Connect(function()
+	btn.BackgroundColor3 = espAtivo
+		and Color3.fromRGB(30, 120, 55)
+		or  Color3.fromRGB(50, 50, 50)
+end)
+btn.MouseLeave:Connect(function()
+	btn.BackgroundColor3 = espAtivo
+		and Color3.fromRGB(20, 90, 40)
+		or  Color3.fromRGB(30, 30, 30)
+end)
+
+-- ── Setup players existentes ───────────────────
+for _, p in ipairs(Players:GetPlayers()) do
+	setupPlayer(p)
+end
+
+Players.PlayerAdded:Connect(setupPlayer)
+
+-- ── Ciclo RGB (Heartbeat) ──────────────────────
+RunService.Heartbeat:Connect(function(dt)
+	if not espAtivo then return end
+
+	hue = (hue + dt * 0.25) % 1
+	local cor = Color3.fromHSV(hue, 1, 1)
+
+	-- Atualiza cor de cada highlight ativo
+	for _, hl in pairs(highlights) do
+		if hl and hl.Parent then
+			hl.FillColor    = cor
+			hl.OutlineColor = cor
+		end
+	end
+
+	-- Reflete a cor atual no botão (borda)
+	stroke.Color = cor
+end)
