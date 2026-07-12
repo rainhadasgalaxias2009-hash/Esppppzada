@@ -174,13 +174,9 @@ RunService.Heartbeat:Connect(function(dt)
     end
 
     stroke.Color = cor
-end)
+end) -- 🔥 só UM end) aqui
 
-	-- Reflete a cor atual no botão (borda)
-	stroke.Color = cor
-end)
-
--- Expõe funções globais para outros scripts via loadstring
+-- Expõe funções globais...
 getgenv().ativarESP = function()
     if espAtivo then return end
     espAtivo = true
