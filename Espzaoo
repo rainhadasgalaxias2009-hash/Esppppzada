@@ -14,6 +14,7 @@ gui.Name           = "ESP_RGB_GUI"
 gui.ResetOnSpawn   = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent         = LocalPlayer:WaitForChild("PlayerGui")
+gui.Enabled = false
 
 local btn = Instance.new("TextButton")
 btn.Name            = "Toggle"
@@ -114,7 +115,7 @@ btn.MouseButton1Click:Connect(function()
 		stroke.Color         = Color3.fromRGB(0, 220, 80)
 		ativarESP()
 	else
-		btn.Text             = "🔴  ESP: OFF"
+		btn.Text  = "🔴  ESP: OFF"
 		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 		stroke.Color         = Color3.fromRGB(80, 80, 80)
 		desativarESP()
@@ -158,3 +159,22 @@ RunService.Heartbeat:Connect(function(dt)
 	-- Reflete a cor atual no botão (borda)
 	stroke.Color = cor
 end)
+
+-- Expõe funções globais para outros scripts via loadstring
+getgenv().ativarESP = function()
+    if espAtivo then return end
+    espAtivo = true
+    btn.Text             = "🟢  ESP: ON"
+    btn.BackgroundColor3 = Color3.fromRGB(20, 90, 40)
+    stroke.Color         = Color3.fromRGB(0, 220, 80)
+    ativarESP()
+end
+
+getgenv().desativarESP = function()
+    if not espAtivo then return end
+    espAtivo = false
+    btn.Text             = "🔴  ESP: OFF"
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    stroke.Color         = Color3.fromRGB(80, 80, 80)
+    desativarESP()
+end
