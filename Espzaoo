@@ -178,6 +178,3 @@ getgenv().desativarESP = function()
     stroke.Color         = Color3.fromRGB(80, 80, 80)
     desativarESP()
 end
-
--- cola no final, junto com as outras getgenv()
-getgenv().espAdicionarHighlight = adicionarHighlight
