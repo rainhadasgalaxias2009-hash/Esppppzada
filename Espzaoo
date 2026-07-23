@@ -31,6 +31,17 @@ local function fsz(l, z)
 end
 
 -- ===== LÓGICA =====
+local function disconnectNoclip()
+    if noclipConn then
+        if type(noclipConn) == "table" then
+            for _, c in pairs(noclipConn) do c:Disconnect() end
+        else
+            noclipConn:Disconnect()
+        end
+        noclipConn = nil
+    end
+end
+
 local function doEnable()
     if noclipConn then return end
     local char = player.Character; if not char then return end
@@ -45,18 +56,20 @@ local function doEnable()
 
     hum.AutoJumpEnabled = false
 
-    noclipConn = RunService.Heartbeat:Connect(function()
+    local function disableCollision()
         local c = player.Character; if not c or not noclipOn then return end
-        local r = c:FindFirstChild("HumanoidRootPart")
-        if not r then return end
         for _, v in pairs(c:GetDescendants()) do
             if v:IsA("BasePart") then v.CanCollide = false end
         end
-    end)
+    end
+
+    local connH = RunService.Heartbeat:Connect(disableCollision)
+    local connS = RunService.Stepped:Connect(disableCollision)
+    noclipConn = {connH, connS}
 end
 
 local function doDisable()
-    if noclipConn then noclipConn:Disconnect(); noclipConn = nil end
+    disconnectNoclip()
     local char = player.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
@@ -72,7 +85,6 @@ local function doDisable()
 end
 
 -- ===== GUI =====
--- tenta gethui() primeiro (protegido), fallback pra PlayerGui
 local function getGuiParent()
     if gethui then return gethui() end
     local pgui = player:WaitForChild("PlayerGui")
@@ -87,6 +99,7 @@ gui.ResetOnSpawn = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.AutoLocalize = false
 gui.IgnoreGuiInset = true
+gui.DisplayOrder = 999
 gui.Parent = getGuiParent()
 
 local panel = Instance.new("Frame")
@@ -175,8 +188,8 @@ end)
 -- respawn
 player.CharacterAdded:Connect(function()
     origCC = {}
+    disconnectNoclip()
     if noclipOn then
-        if noclipConn then noclipConn:Disconnect(); noclipConn = nil end
         task.wait(0.5)
         doEnable()
         local hum2 = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
