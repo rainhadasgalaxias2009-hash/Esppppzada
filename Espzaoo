@@ -1,1 +1,194 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/rainhadasgalaxias2009-hash/Test-zlk-3/refs/heads/main/Zlk"))()
+-- ===== NOCLIP ZLK =====
+local Players    = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player    = Players.LocalPlayer
+local darkColor = Color3.fromRGB(15, 15, 15)
+local hue       = 0
+local noclipOn  = false
+local noclipConn = nil
+local origCC    = {}
+
+local function corner(f, r) Instance.new("UICorner", f).CornerRadius = UDim.new(0, r or 10) end
+local function tex(f)
+    local t = Instance.new("ImageLabel")
+    t.Size = UDim2.fromScale(1,1); t.BackgroundTransparency = 1
+    t.Image = "rbxassetid://73012807286736"
+    t.ScaleType = Enum.ScaleType.Tile; t.TileSize = UDim2.fromOffset(64,64)
+    t.ImageTransparency = 0.20; t.ZIndex = 1; t.Parent = f
+    local ec = f:FindFirstChildOfClass("UICorner")
+    if ec then local c2 = Instance.new("UICorner"); c2.CornerRadius = ec.CornerRadius; c2.Parent = t end
+end
+local function strk(f, th)
+    local s = Instance.new("UIStroke")
+    s.Thickness = th or 2; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    s.Color = Color3.fromHSV(0,1,1); s.Parent = f; return s
+end
+local function fsz(l, z)
+    l.TextSize = z
+    local c = Instance.new("UITextSizeConstraint")
+    c.MinTextSize = z; c.MaxTextSize = z; c.Parent = l
+end
+
+-- ===== LÓGICA =====
+local function doEnable()
+    if noclipConn then return end
+    local char = player.Character; if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum then return end
+
+    origCC = {}
+    for _, v in pairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then origCC[v] = v.CanCollide end
+    end
+
+    hum.AutoJumpEnabled = false
+
+    noclipConn = RunService.Heartbeat:Connect(function()
+        local c = player.Character; if not c or not noclipOn then return end
+        local r = c:FindFirstChild("HumanoidRootPart")
+        if not r then return end
+        for _, v in pairs(c:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end)
+end
+
+local function doDisable()
+    if noclipConn then noclipConn:Disconnect(); noclipConn = nil end
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.AutoJumpEnabled = true end
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then
+                local orig = origCC[v]
+                if orig ~= nil then pcall(function() v.CanCollide = orig end) end
+            end
+        end
+    end
+    origCC = {}
+end
+
+-- ===== GUI =====
+-- tenta gethui() primeiro (protegido), fallback pra PlayerGui
+local function getGuiParent()
+    if gethui then return gethui() end
+    local pgui = player:WaitForChild("PlayerGui")
+    local old = pgui:FindFirstChild("NoclipZLK")
+    if old then old:Destroy() end
+    return pgui
+end
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "NoclipZLK"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.AutoLocalize = false
+gui.IgnoreGuiInset = true
+gui.Parent = getGuiParent()
+
+local panel = Instance.new("Frame")
+panel.Size = UDim2.fromOffset(148, 56)
+panel.Position = UDim2.new(0.5, -74, 0, 200)
+panel.BackgroundColor3 = darkColor
+panel.ZIndex = 5; panel.Parent = gui
+corner(panel, 12); tex(panel)
+local panelStroke = strk(panel, 2.5)
+
+local titleLbl = Instance.new("TextLabel")
+titleLbl.Size = UDim2.new(1, -16, 0, 22); titleLbl.Position = UDim2.fromOffset(8, 3)
+titleLbl.BackgroundTransparency = 1; titleLbl.Text = "🧬 Noclip"
+titleLbl.Font = Enum.Font.Bodoni
+titleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+titleLbl.ZIndex = 6; titleLbl.Parent = panel; fsz(titleLbl, 17)
+
+local statusLbl = Instance.new("TextLabel")
+statusLbl.Size = UDim2.fromOffset(40, 22); statusLbl.Position = UDim2.new(1, -46, 0, 3)
+statusLbl.BackgroundTransparency = 1; statusLbl.Text = "OFF"
+statusLbl.Font = Enum.Font.GothamBold
+statusLbl.TextColor3 = Color3.fromRGB(255, 80, 80)
+statusLbl.TextXAlignment = Enum.TextXAlignment.Right
+statusLbl.ZIndex = 6; statusLbl.Parent = panel; fsz(statusLbl, 14)
+
+local divLine = Instance.new("Frame")
+divLine.Size = UDim2.new(1, -16, 0, 1); divLine.Position = UDim2.fromOffset(8, 27)
+divLine.BackgroundColor3 = Color3.fromHSV(0, 1, 1)
+divLine.BorderSizePixel = 0; divLine.ZIndex = 6; divLine.Parent = panel
+
+local tog = Instance.new("TextButton")
+tog.Size = UDim2.fromOffset(48, 22); tog.Position = UDim2.fromOffset(8, 30)
+tog.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+tog.Text = ""; tog.AutoButtonColor = false
+tog.ZIndex = 6; tog.Parent = panel
+corner(tog, 11)
+local togStroke = strk(tog, 1.5)
+
+local circle = Instance.new("Frame")
+circle.Size = UDim2.fromOffset(18, 18); circle.Position = UDim2.fromOffset(2, 2)
+circle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+circle.ZIndex = 7; circle.Parent = tog
+corner(circle, 9)
+
+local infoLbl = Instance.new("TextLabel")
+infoLbl.Size = UDim2.new(1, -64, 0, 22); infoLbl.Position = UDim2.fromOffset(62, 30)
+infoLbl.BackgroundTransparency = 1; infoLbl.Text = "Atravessa paredes"
+infoLbl.Font = Enum.Font.Bodoni
+infoLbl.TextColor3 = Color3.fromRGB(140, 140, 140)
+infoLbl.TextXAlignment = Enum.TextXAlignment.Left
+infoLbl.ZIndex = 6; infoLbl.Parent = panel; fsz(infoLbl, 12)
+
+-- drag
+panel.InputBegan:Connect(function(inp)
+    if inp.UserInputType ~= Enum.UserInputType.Touch and
+       inp.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+    local sp, si, moved, conn = panel.Position, inp.Position, false, nil
+    conn = inp.Changed:Connect(function()
+        if inp.UserInputState == Enum.UserInputState.Change then
+            local d = inp.Position - si
+            if not moved and d.Magnitude < 12 then return end
+            moved = true
+            panel.Position = UDim2.new(sp.X.Scale, sp.X.Offset+d.X, sp.Y.Scale, sp.Y.Offset+d.Y)
+        elseif inp.UserInputState == Enum.UserInputState.End then
+            conn:Disconnect()
+        end
+    end)
+end)
+
+-- toggle
+tog.MouseButton1Click:Connect(function()
+    noclipOn = not noclipOn
+    if noclipOn then
+        circle:TweenPosition(UDim2.fromOffset(28, 2), "Out", "Quad", 0.2, true)
+        statusLbl.Text = "ON"; statusLbl.TextColor3 = Color3.fromRGB(80, 255, 80)
+        doEnable()
+    else
+        circle:TweenPosition(UDim2.fromOffset(2, 2), "Out", "Quad", 0.2, true)
+        circle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        statusLbl.Text = "OFF"; statusLbl.TextColor3 = Color3.fromRGB(255, 80, 80)
+        doDisable()
+    end
+end)
+
+-- respawn
+player.CharacterAdded:Connect(function()
+    origCC = {}
+    if noclipOn then
+        if noclipConn then noclipConn:Disconnect(); noclipConn = nil end
+        task.wait(0.5)
+        doEnable()
+        local hum2 = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if hum2 then hum2.AutoJumpEnabled = false end
+    end
+end)
+
+-- rgb loop
+RunService.RenderStepped:Connect(function()
+    if not gui.Parent then return end
+    hue = (hue + 0.015) % 1
+    local c = Color3.fromHSV(hue, 1, 1)
+    panelStroke.Color = c; togStroke.Color = c; divLine.BackgroundColor3 = c
+    if noclipOn then circle.BackgroundColor3 = Color3.fromHSV(hue, 1, 1) end
+end)
